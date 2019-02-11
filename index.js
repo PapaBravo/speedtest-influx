@@ -36,6 +36,26 @@ async function sendToInflux(database, message) {
     });
 }
 
-const message = 'cpu_load_short,host=server01,region=us-west value=0.64 1434055562000000000';
+function buildMessage(data) {
+    let message = 'speedtest';
+    message += Object.entries(data.tags).map(([k,v]) => `${k}=${v}`).join(',');
+    message += ' ';
+    message += Object.entries(data.values).map(([k,v]) => `${k}=${v}`).join(',');
+    return message;
+}
+
+const data = {
+    values: {
+        download: 5.8,
+        upload: 3.2,
+        ping: 22
+    },
+    tags: {
+        clientIp: '127.0.0.1',
+        server: 'some.speedtest.com'
+    }
+}
+
+const message = buildMessage(data);
 
 sendToInflux('iot', message);
