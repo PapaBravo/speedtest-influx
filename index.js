@@ -37,25 +37,33 @@ async function sendToInflux(database, message) {
 }
 
 function buildMessage(data) {
-    let message = 'speedtest';
-    message += Object.entries(data.tags).map(([k,v]) => `${k}=${v}`).join(',');
-    message += ' ';
-    message += Object.entries(data.values).map(([k,v]) => `${k}=${v}`).join(',');
-    return message;
+    const tags = Object.entries(data.tags).map(([k, v]) => `${k}=${v}`).join(',');
+    const values = Object.entries(data.values).map(([k, v]) => `${k}=${v}`).join(',');
+    return `speedtest${tags ? ',': ''}${tags} ${values}`;
 }
 
-const data = {
-    values: {
-        download: 5.8,
-        upload: 3.2,
-        ping: 22
-    },
-    tags: {
-        clientIp: '127.0.0.1',
-        server: 'some.speedtest.com'
+async function runSpeedtest() {
+    try {
+        console.log('Running speedtest.');
+        const res = await getCurrentSpeed();
+        console.log(`Measured ${res.speeds.download} down and ${res.speeds.upload} up`);
+        const data = {
+            values: {
+                download: res.speeds.download,
+                upload: res.speeds.upload,
+                ping: res.server.ping
+            },
+            tags: {
+                clientIp: res.client.ip,
+                server: res.server.host
+            }
+        };
+        const message = buildMessage(data);
+        sendToInflux('iot', message);
+    } catch (err) {
+        console.error(err.message);
     }
 }
 
-const message = buildMessage(data);
-
-sendToInflux('iot', message);
+// TODO externalize database name and measurement name to process.args
+runSpeedtest();
