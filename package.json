@@ -1,0 +1,22 @@
+{
+  "name": "speedtest-influx",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PapaBravo/speedtest-influx.git"
+  },
+  "author": "Paul Boeck",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/PapaBravo/speedtest-influx/issues"
+  },
+  "homepage": "https://github.com/PapaBravo/speedtest-influx#readme",
+  "dependencies": {
+    "speedtest-net": "^1.5.0"
+  }
+}
