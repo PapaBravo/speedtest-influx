@@ -13,17 +13,17 @@ async function getCurrentSpeed() {
 
 /**
  * 
- * @param {string} database 
+ * @param {*} env 
  * @param {string} message 
  */
-async function sendToInflux(database, message) {
+async function sendToInflux(env, message) {
     return new Promise((resolve, reject) => {
         const buf = new Buffer(message.toString('binary'), 'binary');
 
         const options = {
-            hostname: 'localhost',
-            port: 8086,
-            path: `/write?db=${database}`,
+            hostname: env.host,
+            port: env.port,
+            path: `/write?db=${env.db}`,
             method: 'POST'
         };
 
@@ -39,10 +39,10 @@ async function sendToInflux(database, message) {
 function buildMessage(data) {
     const tags = Object.entries(data.tags).map(([k, v]) => `${k}=${v}`).join(',');
     const values = Object.entries(data.values).map(([k, v]) => `${k}=${v}`).join(',');
-    return `speedtest${tags ? ',': ''}${tags} ${values}`;
+    return `speedtest${tags ? ',' : ''}${tags} ${values}`;
 }
 
-async function runSpeedtest() {
+async function runSpeedtest(env) {
     try {
         console.log('Running speedtest.');
         const res = await getCurrentSpeed();
@@ -59,11 +59,36 @@ async function runSpeedtest() {
             }
         };
         const message = buildMessage(data);
-        sendToInflux('iot', message);
+        sendToInflux(env, message);
     } catch (err) {
         console.error(err.message);
     }
 }
 
-// TODO externalize database name and measurement name to process.args
-runSpeedtest();
+function getEnvs() {
+    // cutting out node path and file path
+    const rawArgs = process.argv.slice(2);
+
+    const args = {};
+    rawArgs
+        .filter(a => a.startsWith('--'))
+        .map(a => a.slice(2))
+        .map(a => a.split('='))
+        .filter(a => a.length === 2)
+        .forEach(a => args[a[0]] = a[1]);
+
+
+    const defaults = {
+        host: 'localhost',
+        port: '8086',
+        db: 'iot'
+    }
+
+    const env = Object.assign(defaults, args);
+    env.port = Number(env.port)
+
+    return Object.assign(defaults, args);
+}
+
+const env = getEnvs();
+runSpeedtest(env);
